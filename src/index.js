@@ -1,8 +1,8 @@
 import './index.css';
 import nameGenerator from './name-generator';
 import isDef from './is-def';
-  
-  
+
+
 
 // Store/retrieve the name in/from a cookie.
 const cookies = document.cookie.split(';');
@@ -40,6 +40,8 @@ document.querySelector('header>p').textContent = decodeURIComponent(wsname);
 // const ws = new WebSocket("ws://" + window.location.host+ "/socket");
 const ws = new WebSocket("ws://localhost:1234");
 
+ws.binaryType = 'arraybuffer';
+
 // We get notified once connected to the server
 ws.onopen = (event) => {
   console.log("We are connected.");
@@ -47,15 +49,24 @@ ws.onopen = (event) => {
 
 // Listen to messages coming from the server. When it happens, for each coord create a line
 ws.onmessage = (event) => {
-  let data = event.data.split("][");
+  let buffer = new Int32Array(event.data, 0, 5*Int8Array.BYTES_PER_ELEMENT);
+  let data = [];
+  data[0] = buffer[0];
+  data[1] = buffer[1];
+  data[2] = buffer[2];
+  data[3] = buffer[3];
+  data[4] = buffer[4].toString(16);
   if(data[1] !== undefined) {
     let ctx = myCanva.getContext("2d");
-    let posLine = data[1].split(",");
-    let beforePos = data[2].split(",");
+    let rect = myCanva.getBoundingClientRect();
+    let x = data[0] - rect.left;
+    let y = data[1];
+    let previousx = data[2] - rect.left;
+    let previousy = data[3];
     ctx.beginPath();
-    ctx.moveTo(beforePos[0], beforePos[1]);
-    ctx.lineTo(posLine[0], posLine[1]);
-    ctx.strokeStyle = data[3].slice(0, -1);
+    ctx.moveTo(previousx, previousy);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = "#" + data[4];
     ctx.stroke();
   }
 };
@@ -79,11 +90,10 @@ function recordInput() {
       previousxy = xy;
     ctx.moveTo(previousxy[0], previousxy[1]);
     ctx.lineTo(xy[0], xy[1]);
-    sendInput.value = sendInput.value + JSON.stringify(xy) + JSON.stringify(previousxy) + "[" + lineColor + "]";
     ctx.strokeStyle = lineColor;
     ctx.stroke();
+    sendMessage(xy, previousxy);
     previousxy = xy;
-    sendMessage(true);
   }
 }
 
@@ -96,9 +106,19 @@ function getMousePosition(event) {
 }
 
 // Retrieve the input element. Add listeners in order to send the content of the input when the "return" key is pressed.
-function sendMessage(event) {
-    if (sendInput.value !== '') {
+function sendMessage(xy, previousxy) {
+    if (xy !== "" && previousxy !== "") {
       // Send data through the WebSocket
+      let buffer = new Int32Array(5*Int8Array.BYTES_PER_ELEMENT);
+      buffer[0] = xy[0];
+      buffer[1] = xy[1];
+      buffer[2] = previousxy[0];
+      buffer[3] = previousxy[1];
+
+      let hexColor = parseInt(lineColor.replace(/^#/, ''), 16);
+      buffer[4] = hexColor;
+
+      sendInput.value = buffer.buffer;
       ws.send(sendInput.value);
       sendInput.value = '';
     }
