@@ -36,7 +36,7 @@ wss.on('connection', function(client, request) {
   // Register a listener on each message of each connection
   client.on('message', function(message) {
 
-    var cli = '[' + decodeURIComponent(wsname) + '] ';
+    var cli = '[' + decodeURIComponent(wsname) + ']';
     console.log("message from", cli);
     // when receiving a message, broadcast it to all the connected clients
     wss.broadcast(cli + message);

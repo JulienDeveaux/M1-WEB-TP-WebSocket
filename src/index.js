@@ -30,19 +30,27 @@ ws.onopen = (event) => {
   console.log("We are connected.");
 };
 
-// Listen to messages coming from the server. When it happens, create a new <li> and append it to the DOM.
-const messages = document.querySelector('#messages');
-let line;
+// Listen to messages coming from the server. When it happens, for each coord create a line
 ws.onmessage = (event) => {
-  line = document.createElement('li');
-  line.textContent = event.data;
-  messages.appendChild(line);
+  let data = event.data.split("][");
+  data.forEach(e => e.replace('[', ''));
+  data.forEach(e => e.replace(']', ''));
+  console.log(data);
+  let ctx = myCanva.getContext("2d");
+  ctx.beginPath();
+  let posStart = data[1].split(",");
+  ctx.moveTo(posStart[0], posStart[1]);
+  for(let i = 2; i < data.length; i++) {
+    let xy = data[i].split(",");
+    ctx.lineTo(xy[0], xy[1]);
+  }
+  ctx.stroke();
 };
 
 let myCanva = document.querySelector('canvas');
 myCanva.addEventListener('mousemove', recordInput);
 myCanva.addEventListener('mousedown', () => isDown = true);
-myCanva.addEventListener('mouseup', () => isDown = false);
+myCanva.addEventListener('mouseup', () => {isDown = false; previousxy = undefined});
 myCanva.addEventListener('mouseup', sendMessage, true);
 let xy, previousxy, isDown = false;
 let sendInput = {
@@ -53,7 +61,6 @@ let sendInput = {
 function recordInput() {
   if(isDown) {
     let ctx = myCanva.getContext("2d");
-    ctx.fillStyle = 'red';
     ctx.beginPath();
     xy = getMousePosition(window.event);
     if (previousxy === undefined)
@@ -62,7 +69,7 @@ function recordInput() {
     ctx.lineTo(xy[0], xy[1]);
     sendInput.value = sendInput.value + JSON.stringify(xy);
     ctx.stroke();
-    previousxy = xy
+    previousxy = xy;
   }
 }
 
@@ -79,7 +86,6 @@ function sendMessage(event) {
   event.preventDefault();
   event.stopPropagation();
   if (sendInput.value !== '') {
-    console.log(sendInput.value);
     // Send data through the WebSocket
     ws.send(sendInput.value);
     sendInput.value = '';
