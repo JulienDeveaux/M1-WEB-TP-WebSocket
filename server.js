@@ -21,6 +21,8 @@ wss.broadcast = function broadcast(message) {
 
 wss.binaryType = 'arraybuffer';
 
+let history = [];
+
 // Register a listener for new connections on the WebSocket.
 wss.on('connection', function(client, request) {
 
@@ -40,12 +42,17 @@ wss.on('connection', function(client, request) {
   // greet the newly connected user
   client.send('Welcome, ' + decodeURIComponent(wsname) + '!');
 
+  for(let i = 0; i < history.length; i++) {
+    client.send(history[i]);
+  }
+
   // Register a listener on each message of each connection
   client.on('message', function(message) {
 
     var cli = '[' + decodeURIComponent(wsname) + ']';
     console.log("message from", cli);
     // when receiving a message, broadcast it to all the connected clients
+    history[history.length] = message;
     wss.broadcast(message);
   });
 });

@@ -7,7 +7,6 @@ import isDef from './is-def';
 // Store/retrieve the name in/from a cookie.
 const cookies = document.cookie.split(';');
 console.log(cookies)
-console.log(document.cookie);
 let wsname = cookies.find(function(c) {
   if (c.match(/wsname/) !== null) return true;
   return false;
