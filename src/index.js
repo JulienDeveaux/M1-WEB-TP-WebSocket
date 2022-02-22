@@ -30,28 +30,29 @@ ws.onopen = (event) => {
   console.log("We are connected.");
 };
 
+let beforePos;
 // Listen to messages coming from the server. When it happens, for each coord create a line
 ws.onmessage = (event) => {
   let data = event.data.split("][");
-  data.forEach(e => e.replace('[', ''));
-  data.forEach(e => e.replace(']', ''));
-  console.log(data);
-  let ctx = myCanva.getContext("2d");
-  ctx.beginPath();
-  let posStart = data[1].split(",");
-  ctx.moveTo(posStart[0], posStart[1]);
-  for(let i = 2; i < data.length; i++) {
-    let xy = data[i].split(",");
-    ctx.lineTo(xy[0], xy[1]);
+  if(data[1] !== undefined) {
+    if (beforePos === undefined) {
+      beforePos = data[1].slice(0, -1).split(",");   //remove le crochet droit
+    } else {
+      let ctx = myCanva.getContext("2d");
+      let posLine = data[1].slice(0, -1).split(",");
+      ctx.beginPath();
+      ctx.moveTo(beforePos[0], beforePos[1]);
+      ctx.lineTo(posLine[0], posLine[1]);
+      ctx.stroke();
+      beforePos = posLine;
+    }
   }
-  ctx.stroke();
 };
 
 let myCanva = document.querySelector('canvas');
 myCanva.addEventListener('mousemove', recordInput);
 myCanva.addEventListener('mousedown', () => isDown = true);
 myCanva.addEventListener('mouseup', () => {isDown = false; previousxy = undefined});
-myCanva.addEventListener('mouseup', sendMessage, true);
 let xy, previousxy, isDown = false;
 let sendInput = {
   value: ""
@@ -70,6 +71,7 @@ function recordInput() {
     sendInput.value = sendInput.value + JSON.stringify(xy);
     ctx.stroke();
     previousxy = xy;
+    sendMessage(true);
   }
 }
 
@@ -83,12 +85,10 @@ function getMousePosition(event) {
 
 // Retrieve the input element. Add listeners in order to send the content of the input when the "return" key is pressed.
 function sendMessage(event) {
-  event.preventDefault();
-  event.stopPropagation();
-  if (sendInput.value !== '') {
-    // Send data through the WebSocket
-    ws.send(sendInput.value);
-    sendInput.value = '';
-  }
+    if (sendInput.value !== '') {
+      // Send data through the WebSocket
+      ws.send(sendInput.value);
+      sendInput.value = '';
+    }
 }
 
