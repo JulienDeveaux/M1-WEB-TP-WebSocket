@@ -8,7 +8,7 @@
 
 |Nom|Prénom|login|email|
 |--|--|--|--|
-| ??? | ??? | ??? | ???@???.?? |
+| Deveaux | Julien | dj180840 | julien.deveaux@etu.univ-lehavre.fr |
 
 ## Travail à réaliser
 
