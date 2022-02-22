@@ -28,7 +28,12 @@ wss.on('connection', function(client, request) {
     return c.match(/^\s*wsname/) !== null;
   });
   wsname = wsname.split('=')[1];
-  console.log("first connexion from", wsname);
+  var lineColor = cookies.find((c) => {
+    return c.match(/^\s*color/) !== null;
+  });
+  lineColor = lineColor.split("=")[1];
+  wsname = wsname.split('=')[1];
+  console.log("first connexion from", wsname, " with color ", lineColor);
 
   // greet the newly connected user
   client.send('Welcome, ' + decodeURIComponent(wsname) + '!');
